@@ -1,67 +1,124 @@
-<!doctype html>
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Admin Dashboard</title>
-  <script src="https://unpkg.com/html5-qrcode@2.3.7/minified/html5-qrcode.min.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RAVE Admin Dashboard</title>
+<style>
+  body {
+    margin: 0;
+    font-family: 'Segoe UI', sans-serif;
+    background: #1a1a2e;
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: start;
+    min-height: 100vh;
+  }
+
+  h1 { margin-top: 20px; color: #ff416c; text-shadow: 1px 1px 5px #ff4b2b; }
+
+  button {
+    background: linear-gradient(90deg, #ff416c, #ff4b2b);
+    border: none;
+    padding: 15px 30px;
+    color: white;
+    font-size: 18px;
+    margin: 20px;
+    cursor: pointer;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(255,75,43,0.5);
+    transition: 0.3s;
+  }
+
+  button:hover {
+    transform: scale(1.05);
+    box-shadow: 0 6px 20px rgba(255,75,43,0.7);
+  }
+
+  #scanner {
+    border: 3px solid #ff416c;
+    border-radius: 10px;
+    margin-top: 20px;
+  }
+
+  #result {
+    margin-top: 20px;
+    font-size: 22px;
+    padding: 10px 20px;
+    border-radius: 10px;
+    display: inline-block;
+    min-width: 200px;
+    text-align: center;
+    font-weight: bold;
+  }
+
+  .valid { background: #28a745; color: #fff; }
+  .invalid { background: #dc3545; color: #fff; }
+
+  canvas.confetti {
+    position: fixed;
+    top: 0;
+    left: 0;
+    pointer-events: none;
+    width: 100%;
+    height: 100%;
+  }
+</style>
 </head>
-<body style="font-family:system-ui;max-width:720px;margin:1rem auto;padding:1rem;">
-  <h2>Admin: {{ user }}</h2>
-  <p>Total tokens: {{ stats['total'] }} • Used: {{ stats['used'] }}</p>
-  <hr>
-  <h3>Scanner</h3>
-  <div id="reader" style="width:300px;"></div>
-  <p id="scan-result"></p>
-  <script>
-    function onScanSuccess(decodedText, decodedResult) {
-      // send to server for validation
-      fetch("/admin/validate", {
-        method: "POST",
-        headers: {"Content-Type":"application/json"},
-        body: JSON.stringify({token: decodedText.replace(window.location.origin + "/s/","")})
-      }).then(r=>r.json()).then(j=>{
-        if(j.ok){
-          document.getElementById("scan-result").innerText = "VALID: " + j.token;
-        } else {
-          document.getElementById("scan-result").innerText = "INVALID: " + j.msg;
-        }
-      }).catch(e=>{
-        document.getElementById("scan-result").innerText = "Error validating";
-      });
-    }
-    function onScanFailure(error) {
-      // ignore
-    }
-    const html5QrCode = new Html5Qrcode("reader");
-    Html5Qrcode.getCameras().then(cameras => {
-      if (cameras && cameras.length) {
-        html5QrCode.start(
-          cameras[0].id, 
-          { fps: 10, qrbox: 250 },
-          onScanSuccess,
-          onScanFailure
-        );
-      }
-    }).catch(err=>{
-      document.getElementById("scan-result").innerText = "Camera error: " + err;
+<body>
+
+<h1>🎉 RAVE Admin Dashboard 🎉</h1>
+<p>Click the button to open camera and scan QR codes:</p>
+<button id="start-scan-btn">Open Camera</button>
+
+<video id="scanner" width="300" height="200" style="display:none;"></video>
+<div id="result"></div>
+
+<canvas class="confetti"></canvas>
+
+<script src="https://unpkg.com/html5-qrcode"></script>
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+<script>
+const video = document.getElementById('scanner');
+const button = document.getElementById('start-scan-btn');
+const resultBox = document.getElementById('result');
+const confettiCanvas = document.querySelector('canvas.confetti');
+
+function showResult(msg, valid) {
+  resultBox.textContent = msg;
+  resultBox.className = valid ? 'valid' : 'invalid';
+  if(valid){
+    confetti.create(confettiCanvas, { resize: true, useWorker: true })({
+      particleCount: 100,
+      spread: 70,
+      origin: { y: 0.6 }
     });
-  </script>
-  <hr>
-  <h3>Recent tokens (latest 200)</h3>
-  <div style="max-height:300px;overflow:auto;">
-    <table style="width:100%;border-collapse:collapse;">
-      <thead><tr><th>token</th><th>created</th><th>used_at</th><th>used_by</th></tr></thead>
-      <tbody>
-        {% for t in tokens %}
-          <tr>
-            <td style="font-size:0.8rem;">{{ t['token'][:12] }}… <a href="{{ url_for('qrcode_img', token=t['token']) }}" target="_blank">QR</a></td>
-            <td>{{ t['created_at'] }}</td>
-            <td>{{ t['used_at'] or "" }}</td>
-            <td>{{ t['used_by'] or "" }}</td>
-          </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
+  }
+}
+
+button.addEventListener('click', () => {
+    video.style.display = 'block';  // show camera
+    const html5QrcodeScanner = new Html5Qrcode("scanner");
+
+    html5QrcodeScanner.start(
+        { facingMode: "environment" },
+        {
+            fps: 10,
+            qrbox: 250
+        },
+        qrCodeMessage => {
+            fetch(`/admin/validate?token=${qrCodeMessage}`)
+            .then(response => response.json())
+            .then(data => showResult(data.message, data.status==='valid'))
+            .catch(err => showResult('Error validating QR', false));
+        },
+        errorMessage => {
+            // optional: can log scan errors
+        }
+    );
+});
+</script>
 </body>
 </html>
