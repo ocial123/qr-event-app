@@ -1,0 +1,14 @@
+<!doctype html>
+<html>
+<head><meta name="viewport" content="width=device-width,initial-scale=1"><title>QR Event Generator</title></head>
+<body style="font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;max-width:700px;margin:1rem auto;padding:1rem;">
+  <h2>Generate QRs</h2>
+  <form method="post" action="/generate">
+    <label>Count: <input type="number" name="count" value="1" min="1" max="500"></label><br><br>
+    <label>Meta (optional): <input type="text" name="meta" placeholder="e.g. VIP, Table 5"></label><br><br>
+    <button type="submit">Generate</button>
+  </form>
+  <hr>
+  <p><a href="/admin/login">Admin login (3 devices)</a></p>
+</body>
+</html>

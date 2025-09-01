@@ -1,0 +1,14 @@
+<!doctype html>
+<html>
+<head><meta name="viewport" content="width=device-width,initial-scale=1"><title>RAVE</title></head>
+<body style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;">
+  <div style="text-align:center;">
+    <h1>RAVE</h1>
+    {% if exists %}
+      <p style="font-size:0.9rem;color:gray;">Token found. {% if used %}Already used.{% else %}Valid (admin-only).{% endif %}</p>
+    {% else %}
+      <p style="font-size:0.9rem;color:gray;">Unknown token.</p>
+    {% endif %}
+  </div>
+</body>
+</html>

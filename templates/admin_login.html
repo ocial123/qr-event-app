@@ -1,0 +1,19 @@
+<!doctype html>
+<html>
+<head><meta name="viewport" content="width=device-width,initial-scale=1"><title>Admin login</title></head>
+<body style="font-family:system-ui;max-width:420px;margin:1rem auto;padding:1rem;">
+  <h2>Admin login</h2>
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      {% for cat, msg in messages %}
+        <div style="color:red;">{{ msg }}</div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+  <form method="post">
+    <label>Username: <input name="username" required></label><br><br>
+    <label>Password: <input name="password" type="password" required></label><br><br>
+    <button type="submit">Sign in</button>
+  </form>
+</body>
+</html>

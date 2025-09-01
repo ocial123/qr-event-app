@@ -1,0 +1,67 @@
+<!doctype html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Admin Dashboard</title>
+  <script src="https://unpkg.com/html5-qrcode@2.3.7/minified/html5-qrcode.min.js"></script>
+</head>
+<body style="font-family:system-ui;max-width:720px;margin:1rem auto;padding:1rem;">
+  <h2>Admin: {{ user }}</h2>
+  <p>Total tokens: {{ stats['total'] }} • Used: {{ stats['used'] }}</p>
+  <hr>
+  <h3>Scanner</h3>
+  <div id="reader" style="width:300px;"></div>
+  <p id="scan-result"></p>
+  <script>
+    function onScanSuccess(decodedText, decodedResult) {
+      // send to server for validation
+      fetch("/admin/validate", {
+        method: "POST",
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify({token: decodedText.replace(window.location.origin + "/s/","")})
+      }).then(r=>r.json()).then(j=>{
+        if(j.ok){
+          document.getElementById("scan-result").innerText = "VALID: " + j.token;
+        } else {
+          document.getElementById("scan-result").innerText = "INVALID: " + j.msg;
+        }
+      }).catch(e=>{
+        document.getElementById("scan-result").innerText = "Error validating";
+      });
+    }
+    function onScanFailure(error) {
+      // ignore
+    }
+    const html5QrCode = new Html5Qrcode("reader");
+    Html5Qrcode.getCameras().then(cameras => {
+      if (cameras && cameras.length) {
+        html5QrCode.start(
+          cameras[0].id, 
+          { fps: 10, qrbox: 250 },
+          onScanSuccess,
+          onScanFailure
+        );
+      }
+    }).catch(err=>{
+      document.getElementById("scan-result").innerText = "Camera error: " + err;
+    });
+  </script>
+  <hr>
+  <h3>Recent tokens (latest 200)</h3>
+  <div style="max-height:300px;overflow:auto;">
+    <table style="width:100%;border-collapse:collapse;">
+      <thead><tr><th>token</th><th>created</th><th>used_at</th><th>used_by</th></tr></thead>
+      <tbody>
+        {% for t in tokens %}
+          <tr>
+            <td style="font-size:0.8rem;">{{ t['token'][:12] }}… <a href="{{ url_for('qrcode_img', token=t['token']) }}" target="_blank">QR</a></td>
+            <td>{{ t['created_at'] }}</td>
+            <td>{{ t['used_at'] or "" }}</td>
+            <td>{{ t['used_by'] or "" }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</body>
+</html>

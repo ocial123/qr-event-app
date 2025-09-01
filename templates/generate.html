@@ -1,0 +1,22 @@
+<!doctype html>
+<html>
+<head><meta name="viewport" content="width=device-width,initial-scale=1"><title>Generated</title></head>
+<body style="font-family:system-ui;max-width:700px;margin:1rem auto;padding:1rem;">
+  <h2>Generated QR tokens</h2>
+  {% if tokens %}
+    <p>Download PNG by tapping each image, or long-press to save on phone.</p>
+    <div style="display:flex;flex-wrap:wrap;gap:12px;">
+    {% for t in tokens %}
+      <div style="text-align:center;">
+        <img src="{{ url_for('qrcode_img', token=t) }}" style="width:150px;height:150px;"><br>
+        <small>{{ t }}</small>
+      </div>
+    {% endfor %}
+    </div>
+    <p><a href="/">Back</a></p>
+  {% else %}
+    <p>No tokens generated yet.</p>
+    <p><a href="/">Back</a></p>
+  {% endif %}
+</body>
+</html>
